@@ -23,7 +23,8 @@ class SwhRecorder:
 
     def __init__(self):
         """minimal garb is executed when class is loaded."""
-        self.RATE=48100
+        #self.RATE=48100
+        self.RATE=44100
         self.BUFFERSIZE=2**12 #1024 is a good buffer size
         self.secToRecord=.1
         self.threadsDieNow=False
@@ -41,7 +42,29 @@ class SwhRecorder:
         self.secPerPoint=1.0/self.RATE
 
         self.p = pyaudio.PyAudio()
-        self.inStream = self.p.open(format=pyaudio.paInt16,channels=1,rate=self.RATE,input=True,frames_per_buffer=self.BUFFERSIZE)
+		
+        info = self.p.get_host_api_info_by_index(0)
+        numdevices = info.get('deviceCount')
+        #for each audio device, determine if is an input or an output and add it to the appropriate list and dictionary
+        for i in range (0,numdevices):
+                if self.p.get_device_info_by_host_api_device_index(0,i).get('maxInputChannels')>0:
+                        print "Input Device id ", i, " - ", self.p.get_device_info_by_host_api_device_index(0,i).get('name')
+
+                if self.p.get_device_info_by_host_api_device_index(0,i).get('maxOutputChannels')>0:
+                        print "Output Device id ", i, " - ", self.p.get_device_info_by_host_api_device_index(0,i).get('name')
+
+        devinfo = self.p.get_device_info_by_index(1)
+        print "Selected device is ",devinfo.get('name')
+        if self.p.is_format_supported(44100.0,  # Sample rate
+                         input_device=devinfo["index"],
+                         input_channels=devinfo['maxInputChannels'],
+                         input_format=pyaudio.paInt16):
+                print 'Yay!'
+                print "Index : ", devinfo['index']
+                print "Max Input Channels : ", devinfo['maxInputChannels']
+
+        self.inStream = self.p.open(format=pyaudio.paInt16,channels=1,rate=self.RATE,input=True,frames_per_buffer=self.BUFFERSIZE, input_device_index=3)
+        #self.inStream = self.p.open(format=pyaudio.paInt16,channels=1,rate=self.RATE,input=True,frames_per_buffer=self.BUFFERSIZE)
 
         self.xsBuffer=numpy.arange(self.BUFFERSIZE)*self.secPerPoint
         self.xs=numpy.arange(self.chunksToRecord*self.BUFFERSIZE)*self.secPerPoint
@@ -56,6 +79,7 @@ class SwhRecorder:
     def getAudio(self):
         """get a single buffer size worth of audio."""
         audioString=self.inStream.read(self.BUFFERSIZE)
+        #audioString=readAudio(self.BUFFERSIZE)
         return numpy.fromstring(audioString,dtype=numpy.int16)
 
     def record(self,forever=True):

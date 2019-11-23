@@ -25,6 +25,12 @@ Dependencies
 apt-get install python-pygame python-scipy python-numpy python-pyaudio
 ```
 
+Automatic gif spliter
+---------------------
+On windows, use splitGif.bat script to split all gif contains in the gifToSplit directory. Just copy new folders create in gifToSplit in "frames" folder.
+
+Just add "dance" in the name of a gif to have a smooth result on this gif when python script play it.
+
 Usage
 -----
 Play some audio and run visualizer.py. Press F11 to toggle full-screen mode. Use Escape to exit.

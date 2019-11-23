@@ -1,0 +1,1 @@
+for /f %%f in ('dir gifToSplit\*.gif /b /a-d') do if not exist gifToSplit\%%~nf_splited mkdir gifToSplit\%%~nf_splited & convert -coalesce gifToSplit\%%f gifToSplit\%%~nf_splited\gif_splited.jpg

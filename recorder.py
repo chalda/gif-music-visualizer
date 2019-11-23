@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!C:/Python27/python2.exe
 # -*- coding: utf-8 -*-
 
 """
@@ -23,8 +23,8 @@ class SwhRecorder:
 
     def __init__(self):
         """minimal garb is executed when class is loaded."""
-        self.RATE=48100
-        self.BUFFERSIZE=2**12 #1024 is a good buffer size
+        self.RATE=44100
+        self.BUFFERSIZE=2048 #2**12 #1024 is a good buffer size
         self.secToRecord=.1
         self.threadsDieNow=False
         self.newAudio=False
@@ -41,7 +41,12 @@ class SwhRecorder:
         self.secPerPoint=1.0/self.RATE
 
         self.p = pyaudio.PyAudio()
-        self.inStream = self.p.open(format=pyaudio.paInt16,channels=1,rate=self.RATE,input=True,frames_per_buffer=self.BUFFERSIZE)
+        info = self.p.get_host_api_info_by_index(0)
+        numdevices = info.get('deviceCount')
+        for i in range(0, numdevices):
+            if (self.p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+                print "Input Device id ", i, " - ", self.p.get_device_info_by_host_api_device_index(0, i).get('name')
+        self.inStream = self.p.open(format=pyaudio.paInt16,channels=1,rate=self.RATE,input=True,frames_per_buffer=self.BUFFERSIZE, input_device_index=2)
 
         self.xsBuffer=numpy.arange(self.BUFFERSIZE)*self.secPerPoint
         self.xs=numpy.arange(self.chunksToRecord*self.BUFFERSIZE)*self.secPerPoint
@@ -103,8 +108,8 @@ class SwhRecorder:
         return xs,ys
 
     ### VISUALIZATION ###
-    #def plotAudio(self):
-    #    """open a matplotlib popup window showing audio data."""
-    #    pylab.plot(self.audio.flatten())
-    #    pylab.show()
+    def plotAudio(self):
+       """open a matplotlib popup window showing audio data."""
+       pylab.plot(self.audio.flatten())
+       pylab.show()
 

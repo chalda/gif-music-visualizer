@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!C:/Python27/python2.exe
 # -*- coding: utf-8 -*-
 
 import sys, numpy, time
@@ -118,7 +118,12 @@ class Visualization:
 
 if __name__ == "__main__":
 	#v = Visualization("frames/dough/teig-%d.jpg", 0, 66)
-	v = Visualization("frames/melon/melon-%d.jpg", 9, 108)
+	#v = Visualization("frames/melon/melon-%d.jpg", 9, 108)
+	#v = Visualization("frames/dance/dance-%d.jpg", 0, 19)
+	#v = Visualization("frames/dance2/dance-%d.jpg", 0, 99)
+	v = Visualization("frames/bernie/bernie-%d.jpg", 50, 170)
+
+
 	v.show()
 	pygame.quit()
 

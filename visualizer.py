@@ -137,6 +137,7 @@ class Visualization:
 				if self.SR.newAudio:
 					# fourier transformation
 					fft = self.SR.fft()[1]
+					
 					self.SR.newAudio = False
 
 					avg = reduce(lambda x, y: x + y, fft) / len(fft)

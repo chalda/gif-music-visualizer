@@ -14,8 +14,19 @@ import scipy
 import struct
 import pyaudio
 import threading
-#import pylab
+import matplotlib.pyplot as plt
 import struct
+import aubio
+
+samplerate = 44100
+tolerance = 0.8
+win_s = 1024 # fft size
+hop_s = 1024  # hop size
+pitch_o = aubio.tempo("default", win_s, hop_s, samplerate)
+# pitch_o.set_unit("midi")
+# pitch_o.set_tolerance(tolerance)
+pyaudio_format = pyaudio.paFloat32
+
 
 
 class SwhRecorder:
@@ -25,7 +36,7 @@ class SwhRecorder:
         """minimal garb is executed when class is loaded."""
         #self.RATE=48100
         self.RATE=44100
-        self.BUFFERSIZE=2**12 #1024 is a good buffer size
+        self.BUFFERSIZE=4096 #1024 is a good buffer size
         self.secToRecord=.1
         self.threadsDieNow=False
         self.newAudio=False
@@ -53,7 +64,7 @@ class SwhRecorder:
                 if self.p.get_device_info_by_host_api_device_index(0,i).get('maxOutputChannels')>0:
                         print "Output Device id ", i, " - ", self.p.get_device_info_by_host_api_device_index(0,i).get('name')
 
-        devinfo = self.p.get_device_info_by_index(1)
+        devinfo = self.p.get_device_info_by_index(2)
         print "Selected device is ",devinfo.get('name')
         if self.p.is_format_supported(44100.0,  # Sample rate
                          input_device=devinfo["index"],
@@ -63,12 +74,12 @@ class SwhRecorder:
                 print "Index : ", devinfo['index']
                 print "Max Input Channels : ", devinfo['maxInputChannels']
 
-        self.inStream = self.p.open(format=pyaudio.paInt16,channels=1,rate=self.RATE,input=True,frames_per_buffer=self.BUFFERSIZE, input_device_index=2)
+        self.inStream = self.p.open(format=pyaudio_format,channels=1,rate=self.RATE,input=True,frames_per_buffer=self.BUFFERSIZE, input_device_index=2)
         #self.inStream = self.p.open(format=pyaudio.paInt16,channels=1,rate=self.RATE,input=True,frames_per_buffer=self.BUFFERSIZE)
 
         self.xsBuffer=numpy.arange(self.BUFFERSIZE)*self.secPerPoint
         self.xs=numpy.arange(self.chunksToRecord*self.BUFFERSIZE)*self.secPerPoint
-        self.audio=numpy.empty((self.chunksToRecord*self.BUFFERSIZE),dtype=numpy.int16)
+        self.audio=numpy.empty((self.chunksToRecord*self.BUFFERSIZE),dtype=numpy.float32)
 
     def close(self):
         """cleanly back out and release sound card."""
@@ -80,14 +91,25 @@ class SwhRecorder:
         """get a single buffer size worth of audio."""
         audioString=self.inStream.read(self.BUFFERSIZE)
         #audioString=readAudio(self.BUFFERSIZE)
-        return numpy.fromstring(audioString,dtype=numpy.int16)
+        return numpy.fromstring(audioString,dtype=numpy.float32)
 
     def record(self,forever=True):
         """record secToRecord seconds of audio."""
+        delay = 4. * hop_s
         while True:
             if self.threadsDieNow: break
             for i in range(self.chunksToRecord):
-                self.audio[i*self.BUFFERSIZE:(i+1)*self.BUFFERSIZE]=self.getAudio()
+                audioChunk = self.getAudio()
+                # is_beat = pitch_o(audioChunk)
+                # print(is_beat)
+                # if is_beat:
+                #     this_beat = int(self.chunksToRecord - delay + is_beat[0] * hop_s)
+                #     print("%f" % (this_beat / float(samplerate)))
+                #ibrosa.core.stream(audioChunk, block_length, frame_length, hop_length, mono=True, offset=0.0, duration=None, fill_value=None, dtype=<class 'pyaudio.paInt16'>)
+                self.audio[i*self.BUFFERSIZE:(i+1)*self.BUFFERSIZE]=audioChunk
+                #plt.plot(audioChunk)
+                #plt.pause(0.05)
+
             self.newAudio=True
             if forever==False: break
 
@@ -127,8 +149,11 @@ class SwhRecorder:
         return xs,ys
 
     ### VISUALIZATION ###
-    def plotAudio(self):
-       """open a matplotlib popup window showing audio data."""
-       pylab.plot(self.audio.flatten())
-       pylab.show()
+    # def plotAudio(self):
+    #     """open a matplotlib popup window showing audio data."""
+    #     pylab.plot(self.audio.flatten())
+    # def showPlot(self):
+    #     plt.show()
 
+
+#plt.show()

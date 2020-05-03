@@ -1,7 +1,9 @@
 #!C:/Python27/python2.exe
 # -*- coding: utf-8 -*-
 
-import sys, numpy, time
+import sys, numpy, time, random, string, re
+import sched
+
 from recorder import *
 import pygame, pygame.mouse, logging, os, subprocess, sys
 from pygame.locals import *
@@ -15,6 +17,7 @@ class Visualization:
 		self.filename = filename
 		self.minNum = minNum
 		self.maxNum = maxNum
+		self.current = filename
 
 		self.initPygame()
 		self.initRecorder()
@@ -47,12 +50,59 @@ class Visualization:
 		int(perc*screenRect.height)))
 		return surface
 
+	def get_limits(self, path, max):
+		try:
+			with open(path + "preset.txt") as f:
+				print "found a preset"
+				array = []
+				for line in f:  # read rest of lines
+					array.append(int(line))
+				print array
+				print array[0], array[1]
+				return array[0], array[1]
+		except:
+			print "no preset found"
+			return 0, max
+
+
+	def transition(self, newFilename, newMin, newMax):
+		self.filename = newFilename
+		self.minNum = newMin
+		self.maxNum = newMax
+		#self.show()
+
+	def new_random_image(self):
+		nextImage = random.choice(os.listdir("frames/"))
+		print nextImage
+		# os.
+		# max_file = [file for file in filenames if max(
+		# 	[re.match(r'.*(\d+)\.jpg', i).group(1) for i in filenames if re.match(r'.*(\d+)\.jpg', i)]) in file][0]
+		strLen = len(nextImage)
+		print strLen
+		jpgImages = [f for f in os.listdir("frames/%s/" % (nextImage)) if re.match(r'.*\.jpg', f)]
+		print jpgImages
+
+		largest_index = max([int(f[strLen+1:f.index('.')]) for f in jpgImages])
+
+		print largest_index
+
+		minF, maxF = self.get_limits("frames/%s/" % (nextImage),largest_index)
+		print minF, maxF
+
+
+		# os.chdir("frames/" + nextImage)
+		print os.curdir
+		print("Doing stuff...")
+		self.transition("frames/%s/%s-" % (nextImage, nextImage) + "%d.jpg", minF, maxF)
+
 	def show(self):
 		run = True
 		maxAvg = 1
 		lastMapped = 0
 		tendency = 0
 		mapped = 0
+		playTime = 0 #millis
+		newImage = False
 		while run:
 			try:
 				#self.clock.tick(20)
@@ -63,6 +113,8 @@ class Visualization:
 							run = False
 						elif evt.key == K_F11:
 							pygame.display.toggle_fullscreen()
+						elif evt.key == K_DOWN:
+							newImage = True
 					elif evt.type == QUIT:
 						run = False
 
@@ -111,20 +163,50 @@ class Visualization:
 				pygame.display.update()
 
 				# give it a second until the audio buffer is filled up
-				time.sleep(0.01)
+				time.sleep(0.02)
+				playTime += 0.02
+				#print playTime
+				if playTime > 6 or newImage:
+					print "new image time"
+					newImage = True
+					break
 			except:
+				e = sys.exc_info()[0]
+				print e
 				break
-		self.SR.close()
+
+		if not run:
+			self.SR.close()
+			pygame.quit()
+
+		return newImage
+
 
 if __name__ == "__main__":
 	#v = Visualization("frames/dough/teig-%d.jpg", 0, 66)
 	#v = Visualization("frames/melon/melon-%d.jpg", 9, 108)
 	#v = Visualization("frames/dance/dance-%d.jpg", 0, 19)
 	#v = Visualization("frames/dance2/dance-%d.jpg", 0, 99)
-	v = Visualization("frames/bernie/bernie-%d.jpg", 50, 170)
+	v = Visualization("frames/wacky/wacky-%d.jpg", 0, 59)
+	#v = Visualization("frames/bernie/bernie-%d.jpg", 50, 170)
 
+# 	s = sched.scheduler(time.time, time.sleep)
+# #
+# 	def image_loop(sc, newImage):
+# 		nI = False
+# 		if newImage:
+# 			v.new_random_image()
+# 			nI = v.show()
+# 		s.enter(45, 1, image_loop, (sc, nI))
+#
+# 	# do your stuff
+#
+#
+# 	s.enter(5, 1, image_loop, (s, True))
+# 	s.run()
 
-	v.show()
-	pygame.quit()
+	while True:
+		v.new_random_image()
+		nI = v.show()
 
 

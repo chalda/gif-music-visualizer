@@ -1,0 +1,1 @@
+#!/bin/bashtouch tmp.txtfind ./gifToSplit -type f -print0 | xargs -0 -I{} basename {} .gif > tmp.txt;for i in $(cat "tmp.txt"); do    mkdir ./frames/$i    cp ./gifToSplit/$i.gif /frames/$i    cd /frames/$i    magick.exe convert -coalesce $i.gif $i.jpgdone#donewhile read -r line; do mkdir "frames/$line"; done <
